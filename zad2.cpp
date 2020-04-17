@@ -20,8 +20,7 @@ void* Thread(void* data)
     for (size_t i = 2; i <= n; ++i) {
         if (IsPrime(i)) ++cnt;
     }
-    printf("# primes less/eq than %lu are: %lu\n", n, cnt);
-    return NULL;
+    return (void*)cnt;
 }
 
 int main()
@@ -40,8 +39,12 @@ int main()
     }
 
     for (int i = 0; i < 4; ++i) {
-        int s = pthread_join(threads[i], NULL);
+        void* rval;
+        int s = pthread_join(threads[i], &rval);
         assert(s == 0);
+
+        size_t res = (size_t)rval;
+        printf("# primes less/eq than %d are: %lu\n", n[i], res);
     }
 }
 
