@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <pthread.h>
+#include <cassert>
 
 int cnt = 0;
 
@@ -24,7 +25,14 @@ int main()
     for (int i = 0; i < NUM_THREADS; ++i) {
         // NOTE: n mod NUM_THREADS is 0
         size_t loopsPerThread = n / NUM_THREADS;
-        pthread_create(&threads[i], NULL, Thread, (void*)loopsPerThread);
+        int s =
+            pthread_create(&threads[i], NULL, Thread, (void*)loopsPerThread);
+        assert(s == 0);
+    }
+
+    for (int i = 0; i < NUM_THREADS; ++i) {
+        int s = pthread_join(threads[i], NULL);
+        assert(s == 0);
     }
 
     printf("Final counter: %d\n", cnt);
