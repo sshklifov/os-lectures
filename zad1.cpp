@@ -2,16 +2,15 @@
 #include <pthread.h>
 #include <cassert>
 
-int cnt = 0;
-
 void* Thread(void* data)
 {
     size_t loops = (size_t)data;
+    size_t cnt = 0;
     for (size_t i = 0; i < loops; ++i) {
         ++cnt;
     }
 
-    return NULL;
+    return (void*)cnt;
 }
 
 int main()
@@ -30,9 +29,13 @@ int main()
         assert(s == 0);
     }
 
+    int cnt = 0;
     for (int i = 0; i < NUM_THREADS; ++i) {
-        int s = pthread_join(threads[i], NULL);
+        void* rval;
+        int s = pthread_join(threads[i], &rval);
         assert(s == 0);
+
+        cnt += (size_t)rval;
     }
 
     printf("Final counter: %d\n", cnt);
