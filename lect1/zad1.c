@@ -1,6 +1,6 @@
-#include <cstdio>
+#include <stdio.h>
 #include <pthread.h>
-#include <cassert>
+#include <assert.h>
 
 void* Thread(void* data)
 {
@@ -17,7 +17,7 @@ int main()
 {
     /// Note that compiler can optimize out the loop
 
-    int n = 1'000'000'000;
+    int n = 1000000000;
 
     const int NUM_THREADS = 4;
     pthread_t threads[NUM_THREADS];

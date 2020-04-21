@@ -1,6 +1,7 @@
-#include <cstdio>
+#include <stdio.h>
 #include <pthread.h>
-#include <cassert>
+#include <assert.h>
+#include <stdbool.h>
 
 bool IsPrime(int d)
 {
