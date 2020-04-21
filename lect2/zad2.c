@@ -1,11 +1,12 @@
+#include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
 
-int Thread(int* arr, int n, int what)
+int Thread(int* start, int n, int what)
 {
     for (int i = 0; i < n; ++i) {
-        if (arr[i] == what) {
+        if (start[i] == what) {
             return i;
         }
     }
@@ -31,38 +32,29 @@ int main()
     printf("Starting search!\n");
     int what = 987654321;
 
-    int idx = -1;
     int numFinished = 0;
-    // Loop 1
-    idx = Thread(arr + numFinished, n / NTHREADS, what);
-    if (idx >= 0) {
-        printf("Found the number %d\n", what);
-        return 0;
+    bool found = false;
+    for (int i = 0; i < NTHREADS; ++i) {
+        int toFinish;
+        if (i != NTHREADS - 1) {
+            toFinish = n / NTHREADS;
+        }
+        else {
+            toFinish = n - numFinished;
+        }
+        int idx = Thread(arr + numFinished, toFinish, what);
+        if (idx >= 0) {
+            found = true;
+            break;
+        }
+        numFinished += toFinish;
     }
-    numFinished += n / NTHREADS;
-    // Loop 2
-    idx = Thread(arr + numFinished, n / NTHREADS, what);
-    if (idx >= 0) {
+    if (found) {
         printf("Found the number %d\n", what);
-        return 0;
     }
-    numFinished += n / NTHREADS;
-    // Loop 3
-    idx = Thread(arr + numFinished, n / NTHREADS, what);
-    if (idx >= 0) {
-        printf("Found the number %d\n", what);
-        return 0;
+    else {
+        printf("Cound not find %d\n", what);
     }
-    numFinished += n / NTHREADS;
-    // Loop 4
-    idx = Thread(arr + numFinished, n - numFinished, what);
-    if (idx >= 0) {
-        printf("Found the number %d\n", what);
-        return 0;
-    }
-    numFinished = n;
-    // Outside loop
-    printf("Cound not find %d\n", what);
 
     clock_t elapsed = clock() - now;
     double secs = (double)elapsed / CLOCKS_PER_SEC;
