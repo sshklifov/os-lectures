@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 
-int FindNumber(int* arr, int n, int what)
+int Thread(int* arr, int n, int what)
 {
     for (int i = 0; i < n; ++i) {
         if (arr[i] == what) {
@@ -15,6 +15,8 @@ int FindNumber(int* arr, int n, int what)
 int main()
 {
     int n = 1000000000;
+    const int NTHREADS = 4;
+
     size_t bytes = n * sizeof(int); // 4GB!
     int* arr = (int*)malloc(bytes);
     if (arr == NULL) {
@@ -26,20 +28,44 @@ int main()
     }
 
     clock_t now = clock();
-
     printf("Starting search!\n");
     int what = 987654321;
-    int idx = FindNumber(arr, n, what);
+
+    int idx = -1;
+    int numFinished = 0;
+    // Loop 1
+    idx = Thread(arr + numFinished, n / NTHREADS, what);
+    if (idx >= 0) {
+        printf("Found the number %d\n", what);
+        return 0;
+    }
+    numFinished += n / NTHREADS;
+    // Loop 2
+    idx = Thread(arr + numFinished, n / NTHREADS, what);
+    if (idx >= 0) {
+        printf("Found the number %d\n", what);
+        return 0;
+    }
+    numFinished += n / NTHREADS;
+    // Loop 3
+    idx = Thread(arr + numFinished, n / NTHREADS, what);
+    if (idx >= 0) {
+        printf("Found the number %d\n", what);
+        return 0;
+    }
+    numFinished += n / NTHREADS;
+    // Loop 4
+    idx = Thread(arr + numFinished, n - numFinished, what);
+    if (idx >= 0) {
+        printf("Found the number %d\n", what);
+        return 0;
+    }
+    numFinished = n;
+    // Outside loop
+    printf("Cound not find %d\n", what);
 
     clock_t elapsed = clock() - now;
     double secs = (double)elapsed / CLOCKS_PER_SEC;
-
-    if (idx >= 0) {
-        printf("Found the number %d\n", what);
-    }
-    else {
-        printf("Cound not find %d\n", what);
-    }
     printf("Seconds elapsed: %lf\n", secs);
 
     return 0;
