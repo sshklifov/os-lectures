@@ -9,7 +9,7 @@ typedef struct ThreadInfo {
     int* start;
     int n;
     int what;
-    int res;
+    bool* pGlobalRes;
 } ThreadInfo;
 
 void* PerThreadWork(void* arg)
@@ -18,10 +18,14 @@ void* PerThreadWork(void* arg)
     int* start = pInfo->start;
     int n = pInfo->n;
     int what = pInfo->what;
+    bool* pGlobalRes = pInfo->pGlobalRes;
 
     for (int i = 0; i < n; ++i) {
+        if (*pGlobalRes) {
+            break;
+        }
         if (start[i] == what) {
-            pInfo->res = i;
+            *pGlobalRes = 1;
             break;
         }
     }
@@ -33,6 +37,7 @@ bool DoWork(int* arr, int n, int what)
     const int NTHREADS = 4;
     pthread_t threads[NTHREADS];
     ThreadInfo info[NTHREADS];
+    bool res = 0;
 
     int numFinished = 0;
     for (int i = 0; i < NTHREADS; ++i) {
@@ -46,7 +51,7 @@ bool DoWork(int* arr, int n, int what)
         info[i].start = arr + numFinished;
         info[i].n = toFinish;
         info[i].what = what;
-        info[i].res = -1;
+        info[i].pGlobalRes = &res;
         int s = pthread_create(&threads[i], NULL, PerThreadWork, &info[i]);
         assert(s == 0);
         numFinished += toFinish;
@@ -56,17 +61,8 @@ bool DoWork(int* arr, int n, int what)
     for (int i = 0; i < NTHREADS; ++i) {
         int s = pthread_join(threads[i], NULL);
         assert(s == 0);
-
-        int index = info[i].res;
-        if (index >= 0) {
-            printf("Thread_%d found %d @ index %d\n", i, what, index);
-            int realIndex = numFinished + index;
-            printf("Number is originally @ index %d\n", realIndex);
-            found = true;
-        }
-        numFinished += info[i].n;
     }
-    return found;
+    return res;
 }
 
 int main()
@@ -88,14 +84,17 @@ int main()
     assert(s == 0);
 
     printf("Starting search!\n");
-    int what = 987654321;
+    int what = 4;
     bool found = DoWork(arr, n, what);
 
     struct timeval now;
     s = gettimeofday(&now, NULL);
     assert(s == 0);
 
-    if (!found) {
+    if (found) {
+        printf("Found %d!\n", what);
+    }
+    else {
         printf("Cound not find %d\n", what);
     }
 
