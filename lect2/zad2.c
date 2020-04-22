@@ -9,6 +9,7 @@ typedef struct ThreadInfo {
     int* start;
     int n;
     int what;
+    int res;
 } ThreadInfo;
 
 void* PerThreadWork(void* arg)
@@ -20,12 +21,11 @@ void* PerThreadWork(void* arg)
 
     for (int i = 0; i < n; ++i) {
         if (start[i] == what) {
-            long long res = i;
-            return (void*)res;
+            pInfo->res = i;
+            break;
         }
     }
-    long long res = -1;
-    return (void*)res;
+    return NULL;
 }
 
 bool DoWork(int* arr, int n, int what)
@@ -46,6 +46,7 @@ bool DoWork(int* arr, int n, int what)
         info[i].start = arr + numFinished;
         info[i].n = toFinish;
         info[i].what = what;
+        info[i].res = -1;
         int s = pthread_create(&threads[i], NULL, PerThreadWork, &info[i]);
         assert(s == 0);
         numFinished += toFinish;
@@ -53,13 +54,12 @@ bool DoWork(int* arr, int n, int what)
     bool found = false;
     numFinished = 0;
     for (int i = 0; i < NTHREADS; ++i) {
-        void* rval;
-        int s = pthread_join(threads[i], &rval);
+        int s = pthread_join(threads[i], NULL);
         assert(s == 0);
 
-        long long index = (long long)rval;
+        int index = info[i].res;
         if (index >= 0) {
-            printf("Thread_%d found %d @ index %lld\n", i, what, index);
+            printf("Thread_%d found %d @ index %d\n", i, what, index);
             int realIndex = numFinished + index;
             printf("Number is originally @ index %d\n", realIndex);
             found = true;
