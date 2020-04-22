@@ -11,7 +11,7 @@ typedef struct ThreadInfo {
     int what;
 } ThreadInfo;
 
-void* Thread(void* arg)
+void* PerThreadWork(void* arg)
 {
     ThreadInfo* pInfo = (ThreadInfo*)arg;
     int* start = pInfo->start;
@@ -28,28 +28,9 @@ void* Thread(void* arg)
     return (void*)res;
 }
 
-int main()
+bool DoWork(int* arr, int n, int what)
 {
-    int n = 1000000000;
     const int NTHREADS = 4;
-
-    size_t bytes = n * sizeof(int); // 4GB!
-    int* arr = (int*)malloc(bytes);
-    if (arr == NULL) {
-        printf("cannot allocate 4GB\n");
-        return 1;
-    }
-    for (int i = 0; i < n; ++i) {
-        arr[i] = i;
-    }
-
-    struct timeval then;
-    int s = gettimeofday(&then, NULL);
-    assert(s == 0);
-
-    printf("Starting search!\n");
-    int what = 987654321;
-
     pthread_t threads[NTHREADS];
     ThreadInfo info[NTHREADS];
 
@@ -65,7 +46,7 @@ int main()
         info[i].start = arr + numFinished;
         info[i].n = toFinish;
         info[i].what = what;
-        int s = pthread_create(&threads[i], NULL, Thread, &info[i]);
+        int s = pthread_create(&threads[i], NULL, PerThreadWork, &info[i]);
         assert(s == 0);
         numFinished += toFinish;
     }
@@ -85,13 +66,38 @@ int main()
         }
         numFinished += info[i].n;
     }
-    if (!found) {
-        printf("Cound not find %d\n", what);
+    return found;
+}
+
+int main()
+{
+    int n = 1000000000;
+
+    size_t bytes = n * sizeof(int); // 4GB!
+    int* arr = (int*)malloc(bytes);
+    if (arr == NULL) {
+        printf("cannot allocate 4GB\n");
+        return 1;
     }
+    for (int i = 0; i < n; ++i) {
+        arr[i] = i;
+    }
+
+    struct timeval then;
+    int s = gettimeofday(&then, NULL);
+    assert(s == 0);
+
+    printf("Starting search!\n");
+    int what = 987654321;
+    bool found = DoWork(arr, n, what);
 
     struct timeval now;
     s = gettimeofday(&now, NULL);
     assert(s == 0);
+
+    if (!found) {
+        printf("Cound not find %d\n", what);
+    }
 
     int secs = now.tv_sec - then.tv_sec;
     int msecs = now.tv_usec - then.tv_usec;
